@@ -3,6 +3,14 @@ import "./App.css";
 
 // Define punch numbers (1-6)
 const punches = [1, 2, 3, 4, 5, 6];
+const punchDescriptions: Record<number, string> = {
+    1: "Jab",
+    2: "Cross",
+    3: "Lead Hook",
+    4: "Rear Hook",
+    5: "Lead Uppercut",
+    6: "Rear Uppercut",
+};
 const timeOut = 30; // Seconds
 
 // Function to generate a random punch combination
@@ -56,7 +64,9 @@ const App = () => {
                         key={index}
                         className={move === "Duck" ? "duck" : "punch"}
                     >
-                        {move}
+                        {move === "Duck"
+                            ? move
+                            : `${move} - ${punchDescriptions[move as number]}`}
                     </span>
                 ))}
             </div>
