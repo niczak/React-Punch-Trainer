@@ -42,17 +42,29 @@ const getRandomCombination = (): (number | string)[] => {
 
 const App = () => {
     const [combination, setCombination] = useState<(number | string)[]>([]);
+    const [timeLeft, setTimeLeft] = useState(timeOut);
 
     useEffect(() => {
         // Generate first combination on load
         setCombination(getRandomCombination());
+        setTimeLeft(timeOut);
 
         // Update combination
         const interval = setInterval(() => {
             setCombination(getRandomCombination());
+            setTimeLeft(timeOut);
         }, timeOut * 1000);
 
         return () => clearInterval(interval);
+    }, []);
+
+    useEffect(() => {
+        // Countdown timer
+        const countdownInterval = setInterval(() => {
+            setTimeLeft((prevTime) => (prevTime > 0 ? prevTime - 1 : 0));
+        }, 1000);
+
+        return () => clearInterval(countdownInterval);
     }, []);
 
     return (
@@ -70,7 +82,7 @@ const App = () => {
                     </span>
                 ))}
             </div>
-            <p>New combo every {timeOut} seconds!</p>
+            <p>New combo in {timeLeft} seconds!</p>
         </div>
     );
 };
