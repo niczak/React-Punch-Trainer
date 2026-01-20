@@ -24,6 +24,16 @@ const muayThaiStrikes = [
 
 const timeOut = 20; // Seconds
 
+// Helper function to shuffle array
+const shuffleArray = <T,>(array: T[]): T[] => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+};
+
 // Function to generate a random punch combination
 const getRandomCombination = (includeMuayThai: boolean): (number | string)[] => {
     // Decide if we'll include a duck (50% chance)
@@ -36,44 +46,59 @@ const getRandomCombination = (includeMuayThai: boolean): (number | string)[] => 
         : Math.floor(Math.random() * 3) + 3; // 3 to 5 punches if no duck
 
     const combination: (number | string)[] = [];
-    let muayThaiCount = 0;
     const maxMuayThaiStrikes = 2;
 
-    for (let i = 0; i < punchCount; i++) {
-        let availableMoves: (number | string)[];
+    if (includeMuayThai) {
+        // Ensure at least one Muay Thai strike, up to maxMuayThaiStrikes
+        const muayThaiCount = Math.floor(Math.random() * maxMuayThaiStrikes) + 1; // 1 or 2
 
-        if (includeMuayThai && muayThaiCount < maxMuayThaiStrikes) {
-            // Can choose from both punches and Muay Thai strikes
-            availableMoves = [...punches, ...muayThaiStrikes];
-        } else {
-            // Can only choose from punches (either mode is off or we've hit the limit)
-            availableMoves = punches;
+        // Add Muay Thai strikes first
+        for (let i = 0; i < muayThaiCount; i++) {
+            const randomIndex = Math.floor(Math.random() * muayThaiStrikes.length);
+            combination.push(muayThaiStrikes[randomIndex]);
         }
 
-        const randomIndex = Math.floor(Math.random() * availableMoves.length);
-        const selectedMove = availableMoves[randomIndex];
-        combination.push(selectedMove);
-
-        // Track if we selected a Muay Thai strike
-        if (includeMuayThai && muayThaiStrikes.includes(selectedMove as string)) {
-            muayThaiCount++;
+        // Fill remaining slots with punches
+        const remainingSlots = punchCount - muayThaiCount;
+        for (let i = 0; i < remainingSlots; i++) {
+            const randomIndex = Math.floor(Math.random() * punches.length);
+            combination.push(punches[randomIndex]);
+        }
+    } else {
+        // Regular mode: only punches
+        for (let i = 0; i < punchCount; i++) {
+            const randomIndex = Math.floor(Math.random() * punches.length);
+            combination.push(punches[randomIndex]);
         }
     }
+
+    // Shuffle the combination so Muay Thai strikes aren't always at the beginning
+    const shuffled = shuffleArray(combination);
 
     // Add duck in a position other than first or last if decided
     if (includeDuck) {
         const duckIndex =
-            Math.floor(Math.random() * (combination.length - 1)) + 1;
-        combination.splice(duckIndex, 0, "Duck");
+            Math.floor(Math.random() * (shuffled.length - 1)) + 1;
+        shuffled.splice(duckIndex, 0, "Duck");
     }
 
-    return combination;
+    return shuffled;
 };
 
 const App = () => {
     const [combination, setCombination] = useState<(number | string)[]>([]);
     const [timeLeft, setTimeLeft] = useState(timeOut);
-    const [muayThaiMode, setMuayThaiMode] = useState(false);
+
+    // Initialize from localStorage or default to false
+    const [muayThaiMode, setMuayThaiMode] = useState(() => {
+        const saved = localStorage.getItem("muayThaiMode");
+        return saved === "true";
+    });
+
+    // Save to localStorage whenever muayThaiMode changes
+    useEffect(() => {
+        localStorage.setItem("muayThaiMode", muayThaiMode.toString());
+    }, [muayThaiMode]);
 
     useEffect(() => {
         // Generate first combination on load
