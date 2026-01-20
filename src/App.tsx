@@ -11,10 +11,21 @@ const punchDescriptions: Record<number, string> = {
     5: "Lead Uppercut",
     6: "Rear Uppercut",
 };
+
+// Define Muay Thai strikes
+const muayThaiStrikes = [
+    "Left Elbow",
+    "Right Elbow",
+    "Left Knee",
+    "Right Knee",
+    "Left Kick",
+    "Right Kick",
+];
+
 const timeOut = 20; // Seconds
 
 // Function to generate a random punch combination
-const getRandomCombination = (): (number | string)[] => {
+const getRandomCombination = (includeMuayThai: boolean): (number | string)[] => {
     // Decide if we'll include a duck (50% chance)
     const includeDuck = Math.random() < 0.5;
 
@@ -25,9 +36,28 @@ const getRandomCombination = (): (number | string)[] => {
         : Math.floor(Math.random() * 3) + 3; // 3 to 5 punches if no duck
 
     const combination: (number | string)[] = [];
+    let muayThaiCount = 0;
+    const maxMuayThaiStrikes = 2;
 
     for (let i = 0; i < punchCount; i++) {
-        combination.push(punches[Math.floor(Math.random() * punches.length)]);
+        let availableMoves: (number | string)[];
+
+        if (includeMuayThai && muayThaiCount < maxMuayThaiStrikes) {
+            // Can choose from both punches and Muay Thai strikes
+            availableMoves = [...punches, ...muayThaiStrikes];
+        } else {
+            // Can only choose from punches (either mode is off or we've hit the limit)
+            availableMoves = punches;
+        }
+
+        const randomIndex = Math.floor(Math.random() * availableMoves.length);
+        const selectedMove = availableMoves[randomIndex];
+        combination.push(selectedMove);
+
+        // Track if we selected a Muay Thai strike
+        if (includeMuayThai && muayThaiStrikes.includes(selectedMove as string)) {
+            muayThaiCount++;
+        }
     }
 
     // Add duck in a position other than first or last if decided
@@ -43,20 +73,21 @@ const getRandomCombination = (): (number | string)[] => {
 const App = () => {
     const [combination, setCombination] = useState<(number | string)[]>([]);
     const [timeLeft, setTimeLeft] = useState(timeOut);
+    const [muayThaiMode, setMuayThaiMode] = useState(false);
 
     useEffect(() => {
         // Generate first combination on load
-        setCombination(getRandomCombination());
+        setCombination(getRandomCombination(muayThaiMode));
         setTimeLeft(timeOut);
 
         // Update combination
         const interval = setInterval(() => {
-            setCombination(getRandomCombination());
+            setCombination(getRandomCombination(muayThaiMode));
             setTimeLeft(timeOut);
         }, timeOut * 1000);
 
         return () => clearInterval(interval);
-    }, []);
+    }, [muayThaiMode]);
 
     useEffect(() => {
         // Countdown timer
@@ -67,6 +98,22 @@ const App = () => {
         return () => clearInterval(countdownInterval);
     }, []);
 
+    const getMoveDisplay = (move: number | string): string => {
+        if (move === "Duck") return move;
+        if (typeof move === "number") {
+            return `${move} - ${punchDescriptions[move]}`;
+        }
+        // Muay Thai strikes
+        return move;
+    };
+
+    const getMoveClassName = (move: number | string): string => {
+        if (move === "Duck") return "duck";
+        if (typeof move === "number") return "punch";
+        // Muay Thai strikes
+        return "muay-thai-strike";
+    };
+
     return (
         <div className="container">
             <img
@@ -74,15 +121,22 @@ const App = () => {
                 alt="Punch Combination Trainer"
                 className="logo"
             />
+            <div className="toggle-container">
+                <label className="toggle-label">
+                    <input
+                        type="checkbox"
+                        checked={muayThaiMode}
+                        onChange={(e) => setMuayThaiMode(e.target.checked)}
+                        className="toggle-input"
+                    />
+                    <span className="toggle-slider"></span>
+                    <span className="toggle-text">Muay Thai Mode</span>
+                </label>
+            </div>
             <div className="combination">
                 {combination.map((move, index) => (
-                    <span
-                        key={index}
-                        className={move === "Duck" ? "duck" : "punch"}
-                    >
-                        {move === "Duck"
-                            ? move
-                            : `${move} - ${punchDescriptions[move as number]}`}
+                    <span key={index} className={getMoveClassName(move)}>
+                        {getMoveDisplay(move)}
                     </span>
                 ))}
             </div>
