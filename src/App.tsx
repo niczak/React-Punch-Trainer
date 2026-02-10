@@ -22,7 +22,8 @@ const muayThaiStrikes = [
     "Right Kick",
 ];
 
-const timeOut = 20; // Seconds
+const defaultComboDuration = 20; // Seconds
+const comboDurations = [10, 20, 30, 40, 50, 60];
 
 // Helper function to shuffle array
 const shuffleArray = <T,>(array: T[]): T[] => {
@@ -35,7 +36,9 @@ const shuffleArray = <T,>(array: T[]): T[] => {
 };
 
 // Function to generate a random punch combination
-const getRandomCombination = (includeMuayThai: boolean): (number | string)[] => {
+const getRandomCombination = (
+    includeMuayThai: boolean,
+): (number | string)[] => {
     // Decide if we'll include a duck (50% chance)
     const includeDuck = Math.random() < 0.5;
 
@@ -50,11 +53,14 @@ const getRandomCombination = (includeMuayThai: boolean): (number | string)[] => 
 
     if (includeMuayThai) {
         // Ensure at least one Muay Thai strike, up to maxMuayThaiStrikes
-        const muayThaiCount = Math.floor(Math.random() * maxMuayThaiStrikes) + 1; // 1 or 2
+        const muayThaiCount =
+            Math.floor(Math.random() * maxMuayThaiStrikes) + 1; // 1 or 2
 
         // Add Muay Thai strikes first
         for (let i = 0; i < muayThaiCount; i++) {
-            const randomIndex = Math.floor(Math.random() * muayThaiStrikes.length);
+            const randomIndex = Math.floor(
+                Math.random() * muayThaiStrikes.length,
+            );
             combination.push(muayThaiStrikes[randomIndex]);
         }
 
@@ -77,8 +83,7 @@ const getRandomCombination = (includeMuayThai: boolean): (number | string)[] => 
 
     // Add duck in a position other than first or last if decided
     if (includeDuck) {
-        const duckIndex =
-            Math.floor(Math.random() * (shuffled.length - 1)) + 1;
+        const duckIndex = Math.floor(Math.random() * (shuffled.length - 1)) + 1;
         shuffled.splice(duckIndex, 0, "Duck");
     }
 
@@ -87,7 +92,8 @@ const getRandomCombination = (includeMuayThai: boolean): (number | string)[] => 
 
 const App = () => {
     const [combination, setCombination] = useState<(number | string)[]>([]);
-    const [timeLeft, setTimeLeft] = useState(timeOut);
+    const [comboDuration, setComboDuration] = useState(defaultComboDuration);
+    const [timeLeft, setTimeLeft] = useState(defaultComboDuration);
 
     // Initialize from localStorage or default to false
     const [muayThaiMode, setMuayThaiMode] = useState(() => {
@@ -103,16 +109,16 @@ const App = () => {
     useEffect(() => {
         // Generate first combination on load
         setCombination(getRandomCombination(muayThaiMode));
-        setTimeLeft(timeOut);
+        setTimeLeft(comboDuration);
 
         // Update combination
         const interval = setInterval(() => {
             setCombination(getRandomCombination(muayThaiMode));
-            setTimeLeft(timeOut);
-        }, timeOut * 1000);
+            setTimeLeft(comboDuration);
+        }, comboDuration * 1000);
 
         return () => clearInterval(interval);
-    }, [muayThaiMode]);
+    }, [muayThaiMode, comboDuration]);
 
     useEffect(() => {
         // Countdown timer
@@ -121,7 +127,7 @@ const App = () => {
         }, 1000);
 
         return () => clearInterval(countdownInterval);
-    }, []);
+    }, [comboDuration]);
 
     const getMoveDisplay = (move: number | string): string => {
         if (move === "Duck") return move;
@@ -146,16 +152,34 @@ const App = () => {
                 alt="Punch Combination Trainer"
                 className="logo"
             />
-            <div className="toggle-container">
-                <label className="toggle-label">
-                    <input
-                        type="checkbox"
-                        checked={muayThaiMode}
-                        onChange={(e) => setMuayThaiMode(e.target.checked)}
-                        className="toggle-input"
-                    />
-                    <span className="toggle-slider"></span>
-                    <span className="toggle-text">Muay Thai Mode</span>
+            <div className="controls-container">
+                <div className="toggle-container">
+                    <label className="toggle-label">
+                        <span className="toggle-text">Muay Thai Mode</span>
+                        <input
+                            type="checkbox"
+                            checked={muayThaiMode}
+                            onChange={(e) => setMuayThaiMode(e.target.checked)}
+                            className="toggle-input"
+                        />
+                        <span className="toggle-slider"></span>
+                    </label>
+                </div>
+                <label className="duration-label">
+                    <span className="toggle-text">Time</span>
+                    <select
+                        className="duration-select"
+                        value={comboDuration}
+                        onChange={(e) =>
+                            setComboDuration(Number(e.target.value))
+                        }
+                    >
+                        {comboDurations.map((duration) => (
+                            <option key={duration} value={duration}>
+                                {duration} seconds
+                            </option>
+                        ))}
+                    </select>
                 </label>
             </div>
             <div className="combination">
