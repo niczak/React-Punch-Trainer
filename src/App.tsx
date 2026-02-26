@@ -155,7 +155,7 @@ const App = () => {
             <div className="controls-container">
                 <div className="toggle-container">
                     <label className="toggle-label">
-                        <span className="toggle-text">Muay Thai Mode</span>
+                        <span className="toggle-text">Muay Thai</span>
                         <input
                             type="checkbox"
                             checked={muayThaiMode}
@@ -176,7 +176,7 @@ const App = () => {
                     >
                         {comboDurations.map((duration) => (
                             <option key={duration} value={duration}>
-                                {duration} seconds
+                                {duration} sec
                             </option>
                         ))}
                     </select>
